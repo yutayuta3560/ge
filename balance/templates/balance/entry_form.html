@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if instance.pk %}Edit Entry{% else %}Create New Entry{% endif %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container">
+    <h1>{% if instance.pk %}Edit Entry{% else %}Create New Entry{% endif %}</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="hotel" class="form-label">Location</label>
+            <select class="form-select" id="location" name="location">
+                {% for location in locations %}
+                {% if instance.location_id == location.id %}
+                <option value="{{ location.id }}" selected>{{ location.name }}</option>
+                {% else %}
+                <option value="{{ location.id }}">{{ location.name }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="hotel" class="form-label">Hotel</label>
+            <select class="form-select" id="hotel" name="hotel">
+                {% for hotel in hotels %}
+                {% if instance.hotel_id == hotel.id %}
+                <option value="{{ hotel.id }}" selected>{{ hotel.name }}</option>
+                {% else %}
+                <option value="{{ hotel.id }}">{{ hotel.name }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="hotel" class="form-label">Game</label>
+            <select class="form-select" id="game" name="game">
+                {% for game in games %}
+                {% if instance.game_id == game.id %}
+                <option value="{{ game.id }}" selected>{{ game.name }}</option>
+                {% else %}
+                <option value="{{ game.id }}">{{ game.name }}</option>
+                {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label for="investment" class="form-label">Investment</label>
+            <input type="number" class="form-control" id="investment" name="investment" oninput="calculateProfit()"
+                   value="{{ instance.investment }}">
+        </div>
+        <div class="mb-3">
+            <label for="payout" class="form-label">Payout</label>
+            <input type="number" class="form-control" id="payout" name="payout" oninput="calculateProfit()" value="{{ instance.payout }}">
+        </div>
+        <div class="mb-3">
+            <label for="profit" class="form-label">Profit</label>
+            <input type="text" class="form-control" id="profit" name="profit" readonly>
+        </div>
+        <div class="mb-3">
+            <label for="date" class="form-label">Date</label>
+            <input type="date" class="form-control" id="date" name="date"
+                   value="{% if instance.date %}{{ instance.date|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}">
+        </div>
+        <div class="mb-3">
+            <label for="comment" class="form-label">Comment</label>
+            <textarea class="form-control" id="comment" name="comment">{{ instance.comment }}</textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <a href="{% url 'my_list' %}" class="btn btn-secondary">Back</a>
+    </form>
+</div>
+
+
+
+    <script>
+
+        window.onload = function() {
+            calculateProfit();
+        };
+
+        function calculateProfit() {
+            // 入力値の取得
+            var investment = parseFloat(document.getElementById('investment').value);
+            var payout = parseFloat(document.getElementById('payout').value);
+
+            // 利益の計算
+            var profit = payout - investment;
+
+            // 利益を表示する要素に値をセット
+            document.getElementById('profit').value = profit.toFixed(2);
+        }
+    </script>
+</body>
+</html>
