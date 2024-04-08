@@ -7,6 +7,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.db.models import Sum
 from django.contrib.auth.models import User
+from django.http import JsonResponse
 
 
 def entry_list(request):
@@ -92,9 +93,9 @@ def update_entry(request, pk):
 
         return redirect('my_list')
     else:
-        locations = Location.objects.all()
-        hotels = Hotel.objects.all()
-        games = Game.objects.all()
+        locations = Location.objects.all().order_by('name')
+        hotels = Hotel.objects.all().order_by('name')
+        games = Game.objects.all().order_by('name')
         return render(request, 'balance/entry_form.html', {'instance': entry, 'locations': locations,
                                                            'hotels': hotels, 'games': games})
 
@@ -193,3 +194,10 @@ def my_graph(request):
     return render(request, 'balance/graph.html', {'entries': entries,
                                                   'daily_profits': daily_profits, 'dates': dates,
                                                   'monthly_profits': monthly_profits, 'months': months})
+
+
+def get_hotels(request):
+    location_id = request.GET.get('location_id')
+    hotels = Hotel.objects.filter(location_id=location_id).order_by('name').values_list('id', 'name')
+    data = dict(hotels)
+    return JsonResponse(data)

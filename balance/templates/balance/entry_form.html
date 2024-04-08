@@ -95,5 +95,57 @@
             document.getElementById('profit').value = profit.toFixed(2);
         }
     </script>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        var hotelId = '{{ instance.hotel_id }}';
+    </script>
+
+    <script type="text/javascript">
+        $(document).ready(function () {
+            // ページが読み込まれたときにAjaxリクエストを送信してホテルの選択肢を更新
+            function updateHotelOptions(hotelId) {
+                var locationId = $('#location').val();
+                $.ajax({
+                    url: '{% url 'get_hotels' %}',
+                    data: {
+                        'location_id': locationId
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+
+                        $('#hotel').empty();
+                        $.each(data, function (key, value) {
+                            var option = $('<option value="' + key + '">' + value + '</option>');
+                            if (key === hotelId) {
+                                option.attr('selected', 'selected');
+                            }
+                            $('#hotel').append(option);
+                        });
+
+                        $(document).ready(function () {
+                            // select要素内のoption要素を取得し、ソートする
+                            var options = $('#hotel option');
+                            var sortedOptions = options.toArray().sort((a, b) => a.text.localeCompare(b.text));
+
+                            // select要素からすべてのoption要素を削除し、ソート済みのoption要素を追加する
+                            $('#hotel').empty();
+                            sortedOptions.forEach(option => $('#hotel').append(option));
+                        });
+
+                    }
+                });
+            }
+
+            // ページ読み込み時にホテルの選択肢を更新
+            updateHotelOptions(hotelId);
+
+            // locationが変更されたときの処理
+            $('#location').change(function () {
+                updateHotelOptions(null);
+            });
+        });
+    </script>
+
 </body>
 </html>
