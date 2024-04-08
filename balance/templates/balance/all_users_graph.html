@@ -21,10 +21,12 @@
     <div class="tab-content">
         <div class="tab-pane fade show active" id="daily-tab" role="tabpanel" aria-labelledby="tab-daily">
             <!-- Daily content here -->
+            {% block content %}
             <div class="container mt-4">
                 <h1>Total</h1>
                 <canvas id="DailyChart"></canvas>
             </div>
+            {% endblock %}
         </div>
         <div class="tab-pane fade" id="monthly-tab" role="tabpanel" aria-labelledby="tab-monthly">
             <!-- Monthly content here -->
@@ -35,72 +37,40 @@
         </div>
     </div>
 
+    {% block scripts %}
     <script>
-        // サンプルデータ
-        var sampleData = [
-            {
-                username: "User1",
-                dates: ["2024-01-01", "2024-01-02", "2024-01-03"],
-                daily_profits: [100, 200, 150]
-            },
-            {
-                username: "User2",
-                dates: ["2024-01-01", "2024-01-02", "2024-01-03"],
-                daily_profits: [120, 150, 180]
-            }
-        ];
+        // テンプレートからPythonの変数を取得
+        var user_data = {{ user_data|safe }};
 
-        // Chart.jsを設定
-        document.addEventListener('DOMContentLoaded', function() {
-            // データをループしてグラフを描画
-            sampleData.forEach(function(user_data, index) {
-                var userLabels = user_data.dates;
-                var userProfitData = user_data.daily_profits;
+        var datasets = [];
 
-                // Canvas要素を作成
-                var canvasId = 'DailyChart' + index;
-                var canvas = document.createElement('canvas');
-                canvas.id = canvasId;
-                canvas.width = 800;
-                canvas.height = 400;
-                document.body.appendChild(canvas);
+        // ユーザーデータを反復処理
+        user_data.forEach(function(userData) {
+            // 日次利益データセットを作成
+            var dailyDataset = {
+                label: userData.user.username,
+                data: userData.daily_profits,
+                // その他の線の設定
+            };
 
-                // グラフの描画
-                var ctx = document.getElementById(canvasId).getContext('2d');
-                var balanceChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: userLabels,
-                        datasets: [{
-                            label: user_data.username + ' Daily Profit',
-                            data: userProfitData,
-                            borderColor: 'rgba(255, 99, 132, 1)',
-                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                            borderWidth: 1,
-                            tension: 0.1,
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            x: {
-                                display: true,
-                                title: {
-                                    display: true,
-                                    text: 'Date'
-                                }
-                            },
-                            y: {
-                                display: true,
-                                title: {
-                                    display: true,
-                                    text: 'Profit'
-                                }
-                            }
-                        }
-                    }
-                });
-            });
+            // データセットをdatasetsに追加
+            datasets.push(dailyDataset);
+        });
+
+        // Chart.jsのデータオブジェクトにdatasetsを追加
+        var data = {
+            labels: user_data[0].dates, // 最初のユーザーの日付を使用
+            datasets: datasets
+        };
+
+        // Chart.jsでグラフを描画
+        var ctx = document.getElementById('DailyChart').getContext('2d');
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: options
         });
     </script>
+    {% endblock %}
 </body>
 </html>

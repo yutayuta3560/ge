@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.db.models import Sum
 from django.contrib.auth.models import User
 from django.http import JsonResponse
+from datetime import datetime
 
 
 def entry_list(request):
@@ -26,7 +27,7 @@ def my_list(request):
 
 
 def create_entry(request):
-    today = datetime.datetime.today().date()
+    today = datetime.today().date()
     if request.method == 'POST':
         location_id = request.POST.get('location')
         hotel_id = request.POST.get('hotel')
@@ -151,18 +152,10 @@ def all_users_graph(request):
         daily_profits.append(cumulative_profit)
         dates.append(daily_date)
 
-        # 月次利益の集計も修正
-        user_monthly_profits = Balance.objects.filter(user=user).annotate(
-            month=django.db.models.functions.TruncMonth('date')
-        ).values('month').annotate(
-            total_profit=Sum('payout') - Sum('investment')
-        ).order_by('month')
+        # ユーザーデータを辞書に追加
+        user_data.append({'user': user, 'daily_profits': daily_profits, 'dates': dates})
 
-        user_monthly_profits = [(entry['month'], entry['total_profit']) for entry in user_monthly_profits]
-
-        user_data.append({'user': user, 'daily_profits': daily_profits, 'dates': dates,
-                          'monthly_profits': user_monthly_profits})
-
+    # ユーザーデータをテンプレートに渡す
     return render(request, 'balance/all_users_graph.html', {'user_data': user_data})
 
 
@@ -189,11 +182,24 @@ def my_graph(request):
     ).order_by('month')
 
     monthly_profits = [entry['total_profit'] for entry in entries]
-    months = [entry['month'] for entry in entries]
+    months = [entry['month'].strftime('%b %Y') for entry in entries]
 
     return render(request, 'balance/graph.html', {'entries': entries,
                                                   'daily_profits': daily_profits, 'dates': dates,
                                                   'monthly_profits': monthly_profits, 'months': months})
+
+
+def entry_detail(request, pk):
+    # データベースから該当するエントリーを取得
+    entry = get_object_or_404(Balance, pk=pk)
+
+    # テンプレートに渡すコンテキストを準備
+    context = {
+        'instance': entry
+    }
+
+    # テンプレートをレンダリングしてレスポンスを返す
+    return render(request, 'balance/entry_detail.html', context)
 
 
 def get_hotels(request):

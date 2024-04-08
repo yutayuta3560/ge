@@ -8,6 +8,7 @@ urlpatterns = [
     path('', views.my_list, name='my_list'),
     path('my_graph/', views.my_graph, name='my_graph'),
     path('create/', views.create_entry, name='create_entry'),
+    path('detail/<int:pk>/', views.entry_detail, name='entry_detail'),
     path('update/<int:pk>/', views.update_entry, name='update_entry'),
     path('delete/<int:pk>/', views.delete_entry, name='delete_entry'),
     path('get_hotels', views.get_hotels, name='get_hotels'),
