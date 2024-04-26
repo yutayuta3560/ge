@@ -20,7 +20,7 @@ def entry_list(request):
 
 def my_list(request):
     # ログイン中のユーザーに関連するBalanceオブジェクトを日付の降順で取得
-    entries = Balance.objects.filter(user=request.user).order_by('-date')
+    entries = Balance.objects.filter(user=request.user).order_by('-date', '-id')
     for entry in entries:
         entry.profit = entry.payout - entry.investment
     return render(request, 'balance/entry_list.html', {'entries': entries, 'url': 'my'})
