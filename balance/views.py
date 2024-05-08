@@ -180,7 +180,7 @@ def all_users_graph(request):
             if game_balance['sum_investment'] is None:
                 game_summary = 0
             else:
-                game_summary = game_balance['sum_investment'] - game_balance['sum_payout']
+                game_summary = game_balance['sum_payout'] - game_balance['sum_investment']
 
             game_profit.append(
                 {
@@ -195,7 +195,7 @@ def all_users_graph(request):
         if game_balance['sum_investment'] is None:
             game_summary = 0
         else:
-            game_summary = game_balance['sum_investment'] - game_balance['sum_payout']
+            game_summary = game_balance['sum_payout'] - game_balance['sum_investment']
         game_profit.append(
             {
                 'game': 'Total',
