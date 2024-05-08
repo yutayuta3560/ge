@@ -9,6 +9,7 @@ from django.db.models import Sum
 from django.contrib.auth.models import User
 from django.http import JsonResponse
 from datetime import datetime
+from django.db.models import Count
 
 
 def entry_list(request):
@@ -126,37 +127,85 @@ def custom_login(request):
 
 def all_users_graph(request):
     # 全てのユーザーを取得
-    users = User.objects.all()
+    users = User.objects.all()  # データベースから全てのユーザを取得（この例ではDjangoのデフォルトのUserモデルを使用）
+    datas = []
 
-    # ユーザーごとにデータを集計
-    user_data = []
     for user in users:
-        user_entries = Balance.objects.filter(user=user).order_by('date')
+        # ゲーム別カウント
+        game_count = []
+        games = Game.objects.all()
+        for game in games:
+            game_count.append(
+                {
+                    'game': game.name,
+                    'count': Balance.objects.filter(user=user, game=game).count(),
+                }
+            )
+        total_game_count = Balance.objects.filter(user=user).count()
+        game_count.append(
+            {
+                'game': 'Total',
+                'count': total_game_count,
+            }
+        )
 
-        if not user_entries.exists():
-            continue
+        # ロケーション別カウント（同日は重複排除する）
+        location_count = []
 
-        daily_profits = []
-        dates = []
-        cumulative_profit = 0
-        daily_date = user_entries.first().date
+        locations = Location.objects.all()
+        for location in locations:
+            location_count.append(
+                {
+                    'location': location.name,
+                    'count': Balance.objects.filter(user=user, location=location).values('date').annotate(total=Count('date')).count()
+                }
+            )
+        location_count.append(
+            {
+                'location': 'Total',
+                'count': Balance.objects.filter(user=user).values('date').annotate(total=Count('date')).count()
+            }
+        )
 
-        for entry in user_entries:
-            if not daily_date == entry.date:
-                daily_profits.append(cumulative_profit)
-                dates.append(daily_date)
-                daily_date = entry.date
-            profit = entry.payout - entry.investment
-            cumulative_profit += profit
+        # ゲーム別利益
+        game_profit = []
 
-        daily_profits.append(cumulative_profit)
-        dates.append(daily_date)
+        games = Game.objects.all()
+        for game in games:
+            game_balance = Balance.objects.filter(user=user, game=game).aggregate(
+                sum_investment=Sum('investment'),
+                sum_payout=Sum('payout')
+            )
 
-        # ユーザーデータを辞書に追加
-        user_data.append({'user': user, 'daily_profits': daily_profits, 'dates': dates})
+            if game_balance['sum_investment'] is None:
+                game_summary = 0
+            else:
+                game_summary = game_balance['sum_investment'] - game_balance['sum_payout']
 
-    # ユーザーデータをテンプレートに渡す
-    return render(request, 'balance/all_users_graph.html', {'user_data': user_data})
+            game_profit.append(
+                {
+                    'game': game.name,
+                    'profit': game_summary,
+                }
+            )
+        game_balance = Balance.objects.filter(user=user).aggregate(
+            sum_investment=Sum('investment'),
+            sum_payout=Sum('payout'),
+        )
+        if game_balance['sum_investment'] is None:
+            game_summary = 0
+        else:
+            game_summary = game_balance['sum_investment'] - game_balance['sum_payout']
+        game_profit.append(
+            {
+                'game': 'Total',
+                'profit': game_summary,
+            }
+        )
+
+        # ユーザーデータをテンプレートに渡す
+        datas.append({'user': user, 'game_count': game_count, 'location_count': location_count, 'game_profit': game_profit})
+    return render(request, 'balance/all_users_graph.html', {'datas': datas})
 
 
 def my_graph(request):

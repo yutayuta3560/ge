@@ -13,29 +13,71 @@
 
     {% include 'navigation.html' %}
 
-    <div class="nav nav-pills nav-pills-falcon flex-grow-1 mt-2" role="tablist">
-        <button class="btn btn-sm active" data-bs-toggle="pill" data-bs-target="#daily-tab" type="button" role="tab" aria-controls="daily-tab" aria-selected="true" id="tab-daily">Total</button>
-        <button class="btn btn-sm" data-bs-toggle="pill" data-bs-target="#monthly-tab" type="button" role="tab" aria-controls="monthly-tab" aria-selected="false" id="tab-monthly">Profit(Monthly)</button>
-    </div>
+        <div class="nav nav-pills nav-pills-falcon flex-grow-1 mt-2" role="tablist">
+            {% for data in datas %}
+                <button class="btn btn-sm {% if forloop.first %}active{% endif %}" data-bs-toggle="pill" data-bs-target="#user-{{ data.user.id }}-tab" type="button" role="tab" aria-controls="user-{{ data.user.id }}-tab" aria-selected="true">{{ data.user.username }}</button>
+            {% endfor %}
+        </div>
 
-    <div class="tab-content">
-        <div class="tab-pane fade show active" id="daily-tab" role="tabpanel" aria-labelledby="tab-daily">
-            <!-- Daily content here -->
-            {% block content %}
-            <div class="container mt-4">
-                <h1>Total</h1>
-                <canvas id="DailyChart"></canvas>
-            </div>
-            {% endblock %}
+        <div id="user-tabs" class="tab-content">
+            {% for data in datas %}
+                <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="user-{{ data.user.id }}-tab" role="tabpanel" aria-labelledby="tab-user-{{ data.user.id }}">
+                    <!-- ユーザの内容をここに表示 -->
+                    <div class="container mt-4">
+                    <h1>{{ data.user.username }} の内容</h1>
+                        <table class="table table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col">ゲーム</th>
+                                    <th scope="col">プレイ回数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for count_data in data.game_count %}
+                                    <tr>
+                                        <td>{{ count_data.game }}</td>
+                                        <td>{{ count_data.count }}回</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <table class="table table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col">ロケーション</th>
+                                    <th scope="col">プレイ日数</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for count_data in data.location_count %}
+                                    <tr>
+                                        <td>{{ count_data.location }}</td>
+                                        <td>{{ count_data.count }}日</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <table class="table table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col">ゲーム</th>
+                                    <th scope="col">損益</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for profit_data in data.game_profit %}
+                                    <tr>
+                                        <td>{{ profit_data.game }}</td>
+                                        <td>{{ profit_data.profit }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            {% endfor %}
         </div>
-        <div class="tab-pane fade" id="monthly-tab" role="tabpanel" aria-labelledby="tab-monthly">
-            <!-- Monthly content here -->
-            <div class="container mt-4">
-                <h1>Profit(Monthly)</h1>
-                <canvas id="MonthlyChart"></canvas>
-            </div>
-        </div>
-    </div>
+
 
     {% block scripts %}
     <script>
