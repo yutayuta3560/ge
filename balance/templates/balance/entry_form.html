@@ -115,24 +115,16 @@
                     success: function (data) {
 
                         $('#hotel').empty();
-                        $.each(data, function (key, value) {
-                            var option = $('<option value="' + key + '">' + value + '</option>');
+                        var sortedKeys = Object.keys(data).sort(function(a, b) {
+                            return data[a].localeCompare(data[b]);
+                        });
+                        sortedKeys.forEach(function(key, index) {
+                            var option = $('<option value="' + key + '">' + data[key] + '</option>');
                             if (key === hotelId) {
                                 option.attr('selected', 'selected');
                             }
                             $('#hotel').append(option);
                         });
-
-                        $(document).ready(function () {
-                            // select要素内のoption要素を取得し、ソートする
-                            var options = $('#hotel option');
-                            var sortedOptions = options.toArray().sort((a, b) => a.text.localeCompare(b.text));
-
-                            // select要素からすべてのoption要素を削除し、ソート済みのoption要素を追加する
-                            $('#hotel').empty();
-                            sortedOptions.forEach(option => $('#hotel').append(option));
-                        });
-
                     }
                 });
             }

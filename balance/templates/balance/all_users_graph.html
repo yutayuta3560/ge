@@ -29,14 +29,14 @@
                             <thead class="thead-dark">
                                 <tr>
                                     <th scope="col">ゲーム</th>
-                                    <th scope="col">プレイ回数</th>
+                                    <th scope="col" style="text-align: right;">プレイ回数</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for count_data in data.game_count %}
                                     <tr>
                                         <td>{{ count_data.game }}</td>
-                                        <td>{{ count_data.count }}回</td>
+                                        <td style="text-align: right;">{{ count_data.count }}回</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -45,14 +45,14 @@
                             <thead class="thead-dark">
                                 <tr>
                                     <th scope="col">ロケーション</th>
-                                    <th scope="col">プレイ日数</th>
+                                    <th scope="col" style="text-align: right;">プレイ日数</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for count_data in data.location_count %}
                                     <tr>
                                         <td>{{ count_data.location }}</td>
-                                        <td>{{ count_data.count }}日</td>
+                                        <td style="text-align: right;">{{ count_data.count }}日</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -61,16 +61,36 @@
                             <thead class="thead-dark">
                                 <tr>
                                     <th scope="col">ゲーム</th>
-                                    <th scope="col">損益</th>
+                                    <th scope="col" style="text-align: right;">損益</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for profit_data in data.game_profit %}
                                     <tr>
                                         <td>{{ profit_data.game }}</td>
-                                        <td>{{ profit_data.profit }}</td>
+                                        <td style="text-align: right;">{{ profit_data.profit }}</td>
                                     </tr>
                                 {% endfor %}
+                            </tbody>
+                        </table>
+                        <table class="table table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th scope="col">ホテル</th>
+                                    {% for profit_data in data.game_profit %}
+                                    <th style="text-align: right;">{{ profit_data.game }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                    {% for hotel_data in data.hotel_game_profit %}
+                                    <tr>
+                                        <td>{{ hotel_data.hotel }}</td>
+                                        {% for game in hotel_data.games %}
+                                        <td style="text-align: right;">{{ game.profit }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                    {% endfor %}
                             </tbody>
                         </table>
                     </div>

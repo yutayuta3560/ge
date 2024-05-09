@@ -127,13 +127,15 @@ def custom_login(request):
 
 def all_users_graph(request):
     # 全てのユーザーを取得
-    users = User.objects.all()  # データベースから全てのユーザを取得（この例ではDjangoのデフォルトのUserモデルを使用）
+    users = User.objects.all()
+    games = Game.objects.all()
+    hotels = Hotel.objects.all()
+    locations = Location.objects.all()
     datas = []
 
     for user in users:
         # ゲーム別カウント
         game_count = []
-        games = Game.objects.all()
         for game in games:
             game_count.append(
                 {
@@ -152,7 +154,6 @@ def all_users_graph(request):
         # ロケーション別カウント（同日は重複排除する）
         location_count = []
 
-        locations = Location.objects.all()
         for location in locations:
             location_count.append(
                 {
@@ -170,7 +171,6 @@ def all_users_graph(request):
         # ゲーム別利益
         game_profit = []
 
-        games = Game.objects.all()
         for game in games:
             game_balance = Balance.objects.filter(user=user, game=game).aggregate(
                 sum_investment=Sum('investment'),
@@ -203,8 +203,34 @@ def all_users_graph(request):
             }
         )
 
+        # ホテルとゲーム別で損益
+        hotel_game_profit = []
+        for hotel in hotels:
+            hotel_profit_by_hotelgame = []
+            for game in games:
+                game_profit_by_hotelgame = Balance.objects.filter(hotel=hotel, game=game, user=user).aggregate(
+                total_profit=Sum('payout') - Sum('investment')
+                )['total_profit'] or 0
+                hotel_profit_by_hotelgame.append({
+                    'game': game.name,
+                    'profit': game_profit_by_hotelgame
+                })
+            game_profit_by_hotelgame = Balance.objects.filter(hotel=hotel, user=user).aggregate(
+                total_profit=Sum('payout') - Sum('investment')
+            )['total_profit'] or 0
+            hotel_profit_by_hotelgame.append({
+                'game': 'Total',
+                'profit': game_profit_by_hotelgame
+            })
+            hotel_game_profit.append({
+                'hotel': hotel.name,
+                'games': hotel_profit_by_hotelgame
+            })
+
+
         # ユーザーデータをテンプレートに渡す
-        datas.append({'user': user, 'game_count': game_count, 'location_count': location_count, 'game_profit': game_profit})
+        datas.append({'user': user, 'game_count': game_count, 'location_count': location_count,
+                      'game_profit': game_profit, 'hotel_game_profit': hotel_game_profit})
     return render(request, 'balance/all_users_graph.html', {'datas': datas})
 
 
