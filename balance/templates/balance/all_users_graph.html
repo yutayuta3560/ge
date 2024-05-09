@@ -24,19 +24,19 @@
                 <div class="tab-pane fade {% if forloop.first %}show active{% endif %}" id="user-{{ data.user.id }}-tab" role="tabpanel" aria-labelledby="tab-user-{{ data.user.id }}">
                     <!-- ユーザの内容をここに表示 -->
                     <div class="container mt-4">
-                    <h1>{{ data.user.username }} の内容</h1>
+                    <h1>{{ data.user.username }}'s report</h1>
                         <table class="table table-striped">
                             <thead class="thead-dark">
                                 <tr>
-                                    <th scope="col">ゲーム</th>
-                                    <th scope="col" style="text-align: right;">プレイ回数</th>
+                                    <th scope="col">Game</th>
+                                    <th scope="col" style="text-align: right;">Count</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for count_data in data.game_count %}
                                     <tr>
                                         <td>{{ count_data.game }}</td>
-                                        <td style="text-align: right;">{{ count_data.count }}回</td>
+                                        <td style="text-align: right;">{{ count_data.count }} times</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -44,15 +44,15 @@
                         <table class="table table-striped">
                             <thead class="thead-dark">
                                 <tr>
-                                    <th scope="col">ロケーション</th>
-                                    <th scope="col" style="text-align: right;">プレイ日数</th>
+                                    <th scope="col">Location</th>
+                                    <th scope="col" style="text-align: right;">Count</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for count_data in data.location_count %}
                                     <tr>
                                         <td>{{ count_data.location }}</td>
-                                        <td style="text-align: right;">{{ count_data.count }}日</td>
+                                        <td style="text-align: right;">{{ count_data.count }} days</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -60,8 +60,8 @@
                         <table class="table table-striped">
                             <thead class="thead-dark">
                                 <tr>
-                                    <th scope="col">ゲーム</th>
-                                    <th scope="col" style="text-align: right;">損益</th>
+                                    <th scope="col">Game</th>
+                                    <th scope="col" style="text-align: right;">Profit</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -76,7 +76,7 @@
                         <table class="table table-striped">
                             <thead class="thead-dark">
                                 <tr>
-                                    <th scope="col">ホテル</th>
+                                    <th scope="col">Hotel</th>
                                     {% for profit_data in data.game_profit %}
                                     <th style="text-align: right;">{{ profit_data.game }}</th>
                                     {% endfor %}
