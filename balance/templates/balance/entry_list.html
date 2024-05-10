@@ -6,6 +6,11 @@
     <title>GE</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <style>
+        .modal-backdrop {
+            display: none;
+        }
+    </style>
 </head>
 <body>
 
@@ -29,9 +34,7 @@
                     <th>P/L</th>
                     <th>Comment</th>
                     <th>Date</th>
-                    {% if url == 'my' %}
-                        <th>Actions</th>
-                    {% endif %}
+                    <th>Actions</th>
 
                 </tr>
                 </thead>
@@ -44,14 +47,14 @@
                     <td class="text-end">{{ entry.profit }}</td>
                     <td>{{ entry.comment|slice:":10" }}</td>
                     <td>{{ entry.date|date:'m/d/y' }}</td>
-                    {% if url == 'my' %}
                         <td>
                             <a href="{% url 'entry_detail' entry.pk %}" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#entryDetailModal{{ entry.id }}">Details</a>
+                            {% if url == 'my' %}
                             <a href="{% url 'update_entry' entry.pk %}" class="btn btn-primary">Edit</a>
                             <a href="{% url 'delete_entry' entry.pk %}" class="btn btn-danger"
                                onclick="return confirm('Are you sure you want to delete this entry?')">Delete</a>
+                            {% endif %}
                         </td>
-
                         <div class="modal fade" id="entryDetailModal{{ entry.id }}" tabindex="-1" aria-labelledby="entryDetailModalLabel" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
@@ -76,7 +79,6 @@
                                 </div>
                             </div>
                         </div>
-                    {% endif %}
                 </tr>
                 {% empty %}
                 <tr>
@@ -91,5 +93,6 @@
 
 <!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta3/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
