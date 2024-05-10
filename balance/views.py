@@ -13,7 +13,7 @@ from django.db.models import Count
 
 
 def entry_list(request):
-    entries = Balance.objects.all().order_by('-date')
+    entries = Balance.objects.all().order_by('-date', '-id')
     for entry in entries:
         entry.profit = entry.payout - entry.investment
     return render(request, 'balance/entry_list.html', {'entries': entries, 'url': 'all'})
