@@ -30,6 +30,7 @@
                                 <tr>
                                     <th scope="col">Game</th>
                                     <th scope="col" style="text-align: right;">Count</th>
+                                    <th scope="col" style="text-align: right;">Profit/Yield</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -37,6 +38,7 @@
                                     <tr>
                                         <td>{{ count_data.game }}</td>
                                         <td style="text-align: right;">{{ count_data.count }} times</td>
+                                        <td style="text-align: right;">{{ count_data.profit }}/({{ count_data.yield}}%)</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -46,6 +48,7 @@
                                 <tr>
                                     <th scope="col">Location</th>
                                     <th scope="col" style="text-align: right;">Count</th>
+                                    <th scope="col" style="text-align: right;">Profit</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -53,6 +56,7 @@
                                     <tr>
                                         <td>{{ count_data.location }}</td>
                                         <td style="text-align: right;">{{ count_data.count }} days</td>
+                                        <td style="text-align: right;">{{ count_data.profit }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -60,24 +64,8 @@
                         <table class="table table-striped">
                             <thead class="thead-dark">
                                 <tr>
-                                    <th scope="col">Game</th>
-                                    <th scope="col" style="text-align: right;">Profit</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for profit_data in data.game_profit %}
-                                    <tr>
-                                        <td>{{ profit_data.game }}</td>
-                                        <td style="text-align: right;">{{ profit_data.profit }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                        <table class="table table-striped">
-                            <thead class="thead-dark">
-                                <tr>
-                                    <th scope="col">Hotel</th>
-                                    {% for profit_data in data.game_profit %}
+                                    <th scope="col">Profit (Count)</th>
+                                    {% for profit_data in data.game_count %}
                                     <th style="text-align: right;">{{ profit_data.game }}</th>
                                     {% endfor %}
                                 </tr>
@@ -87,7 +75,7 @@
                                     <tr>
                                         <td>{{ hotel_data.hotel }}</td>
                                         {% for game in hotel_data.games %}
-                                        <td style="text-align: right;">{{ game.profit }}</td>
+                                        <td style="text-align: right;">{{ game.profit }} ({{game.count}})</td>
                                         {% endfor %}
                                     </tr>
                                     {% endfor %}

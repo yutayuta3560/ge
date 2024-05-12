@@ -134,20 +134,45 @@ def all_users_graph(request):
     datas = []
 
     for user in users:
-        # ゲーム別カウント
-        game_count = []
+        # ゲーム別カウントと利益の一覧
+        summary_per_game = []
         for game in games:
-            game_count.append(
+            location_balance = Balance.objects.filter(user=user, game=game).aggregate(
+                sum_investment=Sum('investment'),
+                sum_payout=Sum('payout')
+            )
+            if location_balance['sum_investment'] is None:
+                location_summary = 0
+                location_yield = 100
+            else:
+                location_summary = location_balance['sum_payout'] - location_balance['sum_investment']
+                location_yield = round(location_balance['sum_payout'] / location_balance['sum_investment'] * 100, 2)
+
+            summary_per_game.append(
                 {
                     'game': game.name,
                     'count': Balance.objects.filter(user=user, game=game).count(),
+                    'profit': location_summary,
+                    'yield': location_yield,
                 }
             )
-        total_game_count = Balance.objects.filter(user=user).count()
-        game_count.append(
+
+        location_balance = Balance.objects.filter(user=user).aggregate(
+            sum_investment=Sum('investment'),
+            sum_payout=Sum('payout')
+        )
+        if location_balance['sum_investment'] is None:
+            location_summary = 0
+            location_yield = 100
+        else:
+            location_summary = location_balance['sum_payout'] - location_balance['sum_investment']
+            location_yield = round(location_balance['sum_payout'] / location_balance['sum_investment'] * 100, 2)
+        summary_per_game.append(
             {
                 'game': 'Total',
-                'count': total_game_count,
+                'count': Balance.objects.filter(user=user).count(),
+                'profit': location_summary,
+                'yield': location_yield,
             }
         )
 
@@ -155,51 +180,35 @@ def all_users_graph(request):
         location_count = []
 
         for location in locations:
-            location_count.append(
-                {
-                    'location': location.name,
-                    'count': Balance.objects.filter(user=user, location=location).values('date').annotate(total=Count('date')).count()
-                }
-            )
-        location_count.append(
-            {
-                'location': 'Total',
-                'count': Balance.objects.filter(user=user).values('date').annotate(total=Count('date')).count()
-            }
-        )
-
-        # ゲーム別利益
-        game_profit = []
-
-        for game in games:
-            game_balance = Balance.objects.filter(user=user, game=game).aggregate(
+            location_balance = Balance.objects.filter(user=user, location=location).aggregate(
                 sum_investment=Sum('investment'),
                 sum_payout=Sum('payout')
             )
-
-            if game_balance['sum_investment'] is None:
-                game_summary = 0
+            if location_balance['sum_investment'] is None:
+                location_summary = 0
             else:
-                game_summary = game_balance['sum_payout'] - game_balance['sum_investment']
-
-            game_profit.append(
+                location_summary = location_balance['sum_payout'] - location_balance['sum_investment']
+            location_count.append(
                 {
-                    'game': game.name,
-                    'profit': game_summary,
+                    'location': location.name,
+                    'count': Balance.objects.filter(user=user, location=location).values('date').annotate(
+                        total=Count('date')).count(),
+                    'profit': location_summary,
                 }
             )
-        game_balance = Balance.objects.filter(user=user).aggregate(
+        location_balance = Balance.objects.filter(user=user).aggregate(
             sum_investment=Sum('investment'),
-            sum_payout=Sum('payout'),
+            sum_payout=Sum('payout')
         )
-        if game_balance['sum_investment'] is None:
-            game_summary = 0
+        if location_balance['sum_investment'] is None:
+            location_summary = 0
         else:
-            game_summary = game_balance['sum_payout'] - game_balance['sum_investment']
-        game_profit.append(
+            location_summary = location_balance['sum_payout'] - location_balance['sum_investment']
+        location_count.append(
             {
-                'game': 'Total',
-                'profit': game_summary,
+                'location': 'Total',
+                'count': Balance.objects.filter(user=user).values('date').annotate(total=Count('date')).count(),
+                'profit': location_summary,
             }
         )
 
@@ -209,28 +218,30 @@ def all_users_graph(request):
             hotel_profit_by_hotelgame = []
             for game in games:
                 game_profit_by_hotelgame = Balance.objects.filter(hotel=hotel, game=game, user=user).aggregate(
-                total_profit=Sum('payout') - Sum('investment')
+                    total_profit=Sum('payout') - Sum('investment')
                 )['total_profit'] or 0
+                game_count_by_hotelgame = Balance.objects.filter(hotel=hotel, game=game, user=user).count()
                 hotel_profit_by_hotelgame.append({
                     'game': game.name,
+                    'count': game_count_by_hotelgame,
                     'profit': game_profit_by_hotelgame
                 })
             game_profit_by_hotelgame = Balance.objects.filter(hotel=hotel, user=user).aggregate(
                 total_profit=Sum('payout') - Sum('investment')
             )['total_profit'] or 0
+            game_count_by_hotelgame = Balance.objects.filter(hotel=hotel, user=user).count()
             hotel_profit_by_hotelgame.append({
                 'game': 'Total',
-                'profit': game_profit_by_hotelgame
+                'count': game_count_by_hotelgame,
+                'profit': game_profit_by_hotelgame,
             })
             hotel_game_profit.append({
                 'hotel': hotel.name,
                 'games': hotel_profit_by_hotelgame
             })
 
-
-        # ユーザーデータをテンプレートに渡す
-        datas.append({'user': user, 'game_count': game_count, 'location_count': location_count,
-                      'game_profit': game_profit, 'hotel_game_profit': hotel_game_profit})
+        datas.append({'user': user, 'game_count': summary_per_game, 'location_count': location_count,
+                      'hotel_game_profit': hotel_game_profit})
     return render(request, 'balance/all_users_graph.html', {'datas': datas})
 
 
