@@ -5,10 +5,10 @@ from .models import Balance, Location, Hotel, Game
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
-from django.db.models import Sum
+from django.db.models import Sum, F, FloatField
 from django.contrib.auth.models import User
 from django.http import JsonResponse
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db.models import Count
 
 
@@ -240,9 +240,40 @@ def all_users_graph(request):
                 'games': hotel_profit_by_hotelgame
             })
 
+        # 日付別で損益
+        # 今日の日付を取得
+        today = datetime.today().date()
+        # 昨日の日付を取得
+        yesterday = today - timedelta(days=1)
+        # 一昨日の日付を取得
+        day_before_yesterday = today - timedelta(days=2)
+
+        daily_profit = [
+            {
+                'date': today,
+                'profit': get_daily_profit(today),
+            },
+            {
+                'date': yesterday,
+                'profit': get_daily_profit(yesterday),
+            },
+            {
+                'date': day_before_yesterday,
+                'profit': get_daily_profit(day_before_yesterday),
+            },
+        ]
+
         datas.append({'user': user, 'game_count': summary_per_game, 'location_count': location_count,
-                      'hotel_game_profit': hotel_game_profit})
+                      'hotel_game_profit': hotel_game_profit, 'daily_profit': daily_profit, })
+
     return render(request, 'balance/all_users_graph.html', {'datas': datas})
+
+
+def get_daily_profit(date):
+    profit = (Balance.objects.filter(date=date)
+    .annotate(daily_profit=Sum(F('payout') - F('investment'), output_field=FloatField()))
+    .aggregate(total_profit=Sum('daily_profit'))['total_profit'])
+    return profit if profit else 0  # 利益がない場合は0を返す
 
 
 def my_graph(request):

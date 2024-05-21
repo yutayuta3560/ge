@@ -28,6 +28,22 @@
                         <table class="table table-striped">
                             <thead class="thead-dark">
                                 <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col" style="text-align: right;">Profit</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {%for daily in data.daily_profit %}
+                                <tr>
+                                    <td style="text-align:">{{ daily.date }}</td>
+                                    <td style="text-align: right;">{{ daily.profit }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        <table class="table table-striped">
+                            <thead class="thead-dark">
+                                <tr>
                                     <th scope="col">Game</th>
                                     <th scope="col" style="text-align: right;">Count</th>
                                     <th scope="col" style="text-align: right;">Profit/Yield</th>
