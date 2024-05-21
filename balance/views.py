@@ -243,7 +243,7 @@ def all_users_graph(request):
         # 日付別で損益
         daily_profit = []
 
-        for delta in range(0, 4):
+        for delta in range(0, 5):
             day = datetime.today().date() - timedelta(days=delta)
             daily_profit.append(
                 {
