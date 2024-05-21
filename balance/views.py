@@ -241,27 +241,16 @@ def all_users_graph(request):
             })
 
         # 日付別で損益
-        # 今日の日付を取得
-        today = datetime.today().date()
-        # 昨日の日付を取得
-        yesterday = today - timedelta(days=1)
-        # 一昨日の日付を取得
-        day_before_yesterday = today - timedelta(days=2)
+        daily_profit = []
 
-        daily_profit = [
-            {
-                'date': today,
-                'profit': get_daily_profit(today),
-            },
-            {
-                'date': yesterday,
-                'profit': get_daily_profit(yesterday),
-            },
-            {
-                'date': day_before_yesterday,
-                'profit': get_daily_profit(day_before_yesterday),
-            },
-        ]
+        for delta in range(0, 4):
+            day = datetime.today().date() - timedelta(days=delta)
+            daily_profit.append(
+                {
+                    'date': day,
+                    'profit': get_daily_profit(day),
+                },
+            )
 
         datas.append({'user': user, 'game_count': summary_per_game, 'location_count': location_count,
                       'hotel_game_profit': hotel_game_profit, 'daily_profit': daily_profit, })
