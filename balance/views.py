@@ -248,7 +248,7 @@ def all_users_graph(request):
             daily_profit.append(
                 {
                     'date': day,
-                    'profit': get_daily_profit(day),
+                    'profit': get_daily_profit(user, day),
                 },
             )
 
@@ -258,8 +258,8 @@ def all_users_graph(request):
     return render(request, 'balance/all_users_graph.html', {'datas': datas})
 
 
-def get_daily_profit(date):
-    profit = (Balance.objects.filter(date=date)
+def get_daily_profit(user, date):
+    profit = (Balance.objects.filter(user=user, date=date)
     .annotate(daily_profit=Sum(F('payout') - F('investment'), output_field=FloatField()))
     .aggregate(total_profit=Sum('daily_profit'))['total_profit'])
     return profit if profit else 0  # 利益がない場合は0を返す
