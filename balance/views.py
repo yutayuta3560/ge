@@ -10,10 +10,14 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse
 from datetime import datetime, timedelta
 from django.db.models import Count
+from django.core.paginator import Paginator
 
 
 def entry_list(request):
     entries = Balance.objects.all().order_by('-date', '-id')
+    paginator = Paginator(entries, 10)
+    page_number = request.GET.get('page')
+    entries = paginator.get_page(page_number)
     for entry in entries:
         entry.profit = entry.payout - entry.investment
     return render(request, 'balance/entry_list.html', {'entries': entries, 'url': 'all'})
@@ -22,6 +26,9 @@ def entry_list(request):
 def my_list(request):
     # ログイン中のユーザーに関連するBalanceオブジェクトを日付の降順で取得
     entries = Balance.objects.filter(user=request.user).order_by('-date', '-id')
+    paginator = Paginator(entries, 10)
+    page_number = request.GET.get('page')
+    entries = paginator.get_page(page_number)
     for entry in entries:
         entry.profit = entry.payout - entry.investment
     return render(request, 'balance/entry_list.html', {'entries': entries, 'url': 'my'})
