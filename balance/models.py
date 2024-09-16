@@ -31,6 +31,7 @@ class Balance(models.Model):
     game = models.ForeignKey(Game, on_delete=models.CASCADE)
     investment = models.DecimalField(max_digits=10, decimal_places=2)
     payout = models.DecimalField(max_digits=10, decimal_places=2)
+    profit = models.DecimalField(max_digits=10, decimal_places=2, editable=False, null=True)
     comment = models.TextField(null=True)
     date = models.DateField()
     created_at = models.DateTimeField(auto_now_add=True)
@@ -38,5 +39,6 @@ class Balance(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.created_at}"
 
-    def profit(self):
-        return self.payout - self.investment
+    def save(self, *args, **kwargs):
+        self.profit = float(self.payout) - float(self.investment)
+        super().save(*args, **kwargs)

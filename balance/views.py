@@ -5,12 +5,13 @@ from .models import Balance, Location, Hotel, Game
 from django.contrib.auth import authenticate, login
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
-from django.db.models import Sum, F, FloatField
 from django.contrib.auth.models import User
 from django.http import JsonResponse
-from datetime import datetime, timedelta
-from django.db.models import Count
 from django.core.paginator import Paginator
+from django.db.models import Sum, Count, F, Value, DecimalField, FloatField
+from django.db.models.functions import Coalesce
+from decimal import Decimal
+from datetime import datetime, timedelta
 
 
 def entry_list(request):
@@ -142,125 +143,193 @@ def all_users_graph(request):
 
     for user in users:
         # ゲーム別カウントと利益の一覧
+        game_balances = Balance.objects.filter(user=user).values('game__name').annotate(
+            total_profit=Coalesce(Sum('profit', output_field=DecimalField()),
+                                  Value(Decimal('0.00'), output_field=DecimalField())),
+            sum_investment=Coalesce(Sum('investment', output_field=DecimalField()),
+                                    Value(Decimal('0.00'), output_field=DecimalField())),
+            sum_payout=Coalesce(Sum('payout', output_field=DecimalField()),
+                                Value(Decimal('0.00'), output_field=DecimalField())),
+            count=Count('id')
+        )
+
         summary_per_game = []
-        for game in games:
-            location_balance = Balance.objects.filter(user=user, game=game).aggregate(
-                sum_investment=Sum('investment'),
-                sum_payout=Sum('payout')
-            )
-            if location_balance['sum_investment'] is None:
-                location_summary = 0
+        game_totals = {'sum_investment': Decimal('0.00'), 'sum_payout': Decimal('0.00'),
+                       'total_profit': Decimal('0.00'), 'count': 0}
+
+        # ゲーム別データを初期化
+        game_name_to_data = {game.name: {'sum_investment': Decimal('0.00'), 'sum_payout': Decimal('0.00'),
+                                         'total_profit': Decimal('0.00'), 'count': 0} for game in games}
+
+        for balance in game_balances:
+            game_name = balance['game__name']
+            sum_investment = balance['sum_investment']
+            sum_payout = balance['sum_payout']
+            total_profit = balance['total_profit']
+            count = balance['count']
+
+            if sum_investment == 0:
                 location_yield = 100
             else:
-                location_summary = location_balance['sum_payout'] - location_balance['sum_investment']
-                location_yield = round(location_balance['sum_payout'] / location_balance['sum_investment'] * 100, 2)
+                location_yield = round(sum_payout / sum_investment * 100, 2)
 
-            summary_per_game.append(
-                {
-                    'game': game.name,
-                    'count': Balance.objects.filter(user=user, game=game).count(),
-                    'profit': location_summary,
-                    'yield': location_yield,
-                }
-            )
-
-        location_balance = Balance.objects.filter(user=user).aggregate(
-            sum_investment=Sum('investment'),
-            sum_payout=Sum('payout')
-        )
-        if location_balance['sum_investment'] is None:
-            location_summary = 0
-            location_yield = 100
-        else:
-            location_summary = location_balance['sum_payout'] - location_balance['sum_investment']
-            location_yield = round(location_balance['sum_payout'] / location_balance['sum_investment'] * 100, 2)
-        summary_per_game.append(
-            {
-                'game': 'Total',
-                'count': Balance.objects.filter(user=user).count(),
-                'profit': location_summary,
+            summary_per_game.append({
+                'game': game_name,
+                'count': count,
+                'profit': total_profit,
                 'yield': location_yield,
+            })
+
+            # 合計を計算
+            game_totals['sum_investment'] += sum_investment
+            game_totals['sum_payout'] += sum_payout
+            game_totals['total_profit'] += total_profit
+            game_totals['count'] += count
+
+            # ゲーム別データを更新
+            game_name_to_data[game_name] = {
+                'sum_investment': sum_investment,
+                'sum_payout': sum_payout,
+                'total_profit': total_profit,
+                'count': count
             }
-        )
+
+        # 存在しないゲームを追加
+        for game in games:
+            if game.name not in [item['game'] for item in summary_per_game]:
+                summary_per_game.append({
+                    'game': game.name,
+                    'count': 0,
+                    'profit': Decimal('0.00'),
+                    'yield': 100,
+                })
+
+        # トータルの計算
+        if game_totals['sum_investment'] == 0:
+            total_yield = 100
+        else:
+            total_yield = round(game_totals['sum_payout'] / game_totals['sum_investment'] * 100, 2)
+
+        summary_per_game.append({
+            'game': 'Total',
+            'count': game_totals['count'],
+            'profit': game_totals['total_profit'],
+            'yield': total_yield,
+        })
 
         # ロケーション別カウント（同日は重複排除する）
+        location_balances = Balance.objects.filter(user=user).values('location__name').annotate(
+            total_profit=Coalesce(Sum('profit', output_field=DecimalField()),
+                                  Value(Decimal('0.00'), output_field=DecimalField())),
+            count=Count('date', distinct=True)
+        )
+
         location_count = []
 
+        for balance in location_balances:
+            location_name = balance['location__name']
+            total_profit = balance['total_profit']
+            count = balance['count']
+
+            location_count.append({
+                'location': location_name,
+                'count': count,
+                'profit': total_profit,
+            })
+
+        # 存在しないロケーションを追加
         for location in locations:
-            location_balance = Balance.objects.filter(user=user, location=location).aggregate(
-                sum_investment=Sum('investment'),
-                sum_payout=Sum('payout')
-            )
-            if location_balance['sum_investment'] is None:
-                location_summary = 0
-            else:
-                location_summary = location_balance['sum_payout'] - location_balance['sum_investment']
-            location_count.append(
-                {
+            if location.name not in [item['location'] for item in location_count]:
+                location_count.append({
                     'location': location.name,
-                    'count': Balance.objects.filter(user=user, location=location).values('date').annotate(
-                        total=Count('date')).count(),
-                    'profit': location_summary,
-                }
-            )
-        location_balance = Balance.objects.filter(user=user).aggregate(
-            sum_investment=Sum('investment'),
-            sum_payout=Sum('payout')
-        )
-        if location_balance['sum_investment'] is None:
-            location_summary = 0
-        else:
-            location_summary = location_balance['sum_payout'] - location_balance['sum_investment']
-        location_count.append(
-            {
-                'location': 'Total',
-                'count': Balance.objects.filter(user=user).values('date').annotate(total=Count('date')).count(),
-                'profit': location_summary,
-            }
-        )
+                    'count': 0,
+                    'profit': Decimal('0.00'),
+                })
+
+        # トータルの計算
+        total_location_profit = sum(item['profit'] for item in location_count if item['location'] != 'Total')
+        total_location_count = sum(item['count'] for item in location_count if item['location'] != 'Total')
+
+        location_count.append({
+            'location': 'Total',
+            'count': total_location_count,
+            'profit': total_location_profit,
+        })
 
         # ホテルとゲーム別で損益
         hotel_game_profit = []
         for hotel in hotels:
+            balances = Balance.objects.filter(user=user, hotel=hotel).values('game__name').annotate(
+                total_profit=Coalesce(Sum('profit', output_field=DecimalField()),
+                                      Value(Decimal('0.00'), output_field=DecimalField())),
+                count=Count('id')
+            )
+
             hotel_profit_by_hotelgame = []
+
+            game_data = {game.name: {'profit': Decimal('0.00'), 'count': 0} for game in games}
+
+            for balance in balances:
+                game_name = balance['game__name']
+                total_profit = balance['total_profit']
+                count = balance['count']
+
+                game_data[game_name] = {
+                    'profit': total_profit,
+                    'count': count
+                }
+
             for game in games:
-                game_profit_by_hotelgame = Balance.objects.filter(hotel=hotel, game=game, user=user).aggregate(
-                    total_profit=Sum('payout') - Sum('investment')
-                )['total_profit'] or 0
-                game_count_by_hotelgame = Balance.objects.filter(hotel=hotel, game=game, user=user).count()
+                data = game_data[game.name]
                 hotel_profit_by_hotelgame.append({
                     'game': game.name,
-                    'count': game_count_by_hotelgame,
-                    'profit': game_profit_by_hotelgame
+                    'count': data['count'],
+                    'profit': data['profit']
                 })
-            game_profit_by_hotelgame = Balance.objects.filter(hotel=hotel, user=user).aggregate(
-                total_profit=Sum('payout') - Sum('investment')
-            )['total_profit'] or 0
-            game_count_by_hotelgame = Balance.objects.filter(hotel=hotel, user=user).count()
+
+            # トータルの計算
+            total_profit = sum(item['profit'] for item in hotel_profit_by_hotelgame)
+            total_count = sum(item['count'] for item in hotel_profit_by_hotelgame)
+
             hotel_profit_by_hotelgame.append({
                 'game': 'Total',
-                'count': game_count_by_hotelgame,
-                'profit': game_profit_by_hotelgame,
+                'count': total_count,
+                'profit': total_profit,
             })
+
             hotel_game_profit.append({
                 'hotel': hotel.name,
                 'games': hotel_profit_by_hotelgame
             })
 
         # 日付別で損益
+        daily_balances = Balance.objects.filter(
+            user=user,
+            date__gte=datetime.today().date() - timedelta(days=4)
+        ).values('date').annotate(
+            total_profit=Coalesce(Sum('profit', output_field=DecimalField()),
+                                  Value(Decimal('0.00'), output_field=DecimalField()))
+        )
+
+        daily_profit_dict = {balance['date']: balance['total_profit'] for balance in daily_balances}
+
         daily_profit = []
 
         for delta in range(0, 5):
             day = datetime.today().date() - timedelta(days=delta)
-            daily_profit.append(
-                {
-                    'date': day,
-                    'profit': get_daily_profit(user, day),
-                },
-            )
+            profit = daily_profit_dict.get(day, Decimal('0.00'))
+            daily_profit.append({
+                'date': day,
+                'profit': profit,
+            })
 
-        datas.append({'user': user, 'game_count': summary_per_game, 'location_count': location_count,
-                      'hotel_game_profit': hotel_game_profit, 'daily_profit': daily_profit, })
+        datas.append({
+            'user': user,
+            'game_count': summary_per_game,
+            'location_count': location_count,
+            'hotel_game_profit': hotel_game_profit,
+            'daily_profit': daily_profit,
+        })
 
     return render(request, 'balance/all_users_graph.html', {'datas': datas})
 
