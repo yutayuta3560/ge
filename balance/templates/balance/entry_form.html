@@ -64,7 +64,7 @@
         <div class="mb-3">
             <label for="date" class="form-label">Date</label>
             <input type="date" class="form-control" id="date" name="date"
-                   value="{% if instance.date %}{{ instance.date|date:'Y-m-d' }}{% else %}{{ today|date:'Y-m-d' }}{% endif %}">
+                   value="{% if instance.date %}{{ instance.date|date:'Y-m-d' }}{% endif %}">
         </div>
         <div class="mb-3">
             <label for="comment" class="form-label">Comment</label>
@@ -136,6 +136,20 @@
             $('#location').change(function () {
                 updateHotelOptions(null);
             });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var dateInput = document.getElementById('date');
+            // 既に値が設定されていない場合のみデフォルト値を設定
+            if (!dateInput.value) {
+                var today = new Date();
+                var day = ("0" + today.getDate()).slice(-2);
+                var month = ("0" + (today.getMonth() + 1)).slice(-2);
+                var dateValue = today.getFullYear() + "-" + month + "-" + day;
+                dateInput.value = dateValue;
+            }
         });
     </script>
 
