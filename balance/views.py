@@ -142,7 +142,7 @@ def custom_login(request):
 def all_users_graph(request):
     # 全てのユーザーを取得
     users = User.objects.all()
-    games = Game.objects.all()
+    games = Game.objects.all().order_by('name')
     hotels = Hotel.objects.all()
     locations = Location.objects.all()
     datas = []
@@ -300,16 +300,17 @@ def all_users_graph(request):
             total_profit = sum(item['profit'] for item in hotel_profit_by_hotelgame)
             total_count = sum(item['count'] for item in hotel_profit_by_hotelgame)
 
-            hotel_profit_by_hotelgame.append({
-                'game': 'Total',
-                'count': total_count,
-                'profit': total_profit,
-            })
+            if total_count > 0:
+                hotel_profit_by_hotelgame.append({
+                    'game': 'Total',
+                    'count': total_count,
+                    'profit': total_profit,
+                })
 
-            hotel_game_profit.append({
-                'hotel': hotel.name,
-                'games': hotel_profit_by_hotelgame
-            })
+                hotel_game_profit.append({
+                    'hotel': hotel.name,
+                    'games': hotel_profit_by_hotelgame
+                })
 
         # 日付別で損益
         daily_balances = Balance.objects.filter(
