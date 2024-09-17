@@ -1,8 +1,7 @@
 import datetime
 import django.db.models.functions
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import get_object_or_404
 from .models import Balance, Location, Hotel, Game
-from django.contrib.auth import authenticate, login
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -12,9 +11,16 @@ from django.db.models import Sum, Count, F, Value, DecimalField, FloatField
 from django.db.models.functions import Coalesce
 from decimal import Decimal
 from datetime import datetime, timedelta
+from .forms import SignUpForm
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from django.contrib.auth.forms import AuthenticationForm
 
 
 def entry_list(request):
+    if not request.user.first_name == '1':
+        return my_list(request)
+
     entries = Balance.objects.all().order_by('-date', '-id')
     paginator = Paginator(entries, 10)
     page_number = request.GET.get('page')
@@ -142,6 +148,9 @@ def all_users_graph(request):
     datas = []
 
     for user in users:
+        if not request.user.first_name == '1' and not user.username == request.user.username:
+            continue
+
         # ゲーム別カウントと利益の一覧
         game_balances = Balance.objects.filter(user=user).values('game__name').annotate(
             total_profit=Coalesce(Sum('profit', output_field=DecimalField()),
@@ -343,6 +352,11 @@ def get_daily_profit(user, date):
 
 def my_graph(request):
     entries = Balance.objects.filter(user=request.user).order_by('date')
+
+    if not entries:
+        context = {}
+        return render(request, 'balance/graph.html', context)
+
     daily_profits = []
     dates = []
     cumulative_profit = 0
@@ -389,3 +403,30 @@ def get_hotels(request):
     hotels = Hotel.objects.filter(location_id=location_id).order_by('name').values_list('id', 'name')
     data = dict(hotels)
     return JsonResponse(data)
+
+
+def signup(request):
+    if request.method == 'POST':
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('my_list')  # 登録後にリダイレクトするページ
+    else:
+        form = SignUpForm()
+    return render(request, 'balance/signup.html', {'form': form})
+
+
+def user_login(request):
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('my_list')  # ログイン後のリダイレクト先
+    else:
+        form = AuthenticationForm()
+    return render(request, 'balance/login.html', {'form': form})
