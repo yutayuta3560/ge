@@ -2,14 +2,74 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
+    <title>Gamble Entry - Login</title>
+    {% load static %}
+    <!-- レスポンシブ対応のメタタグを追加 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&display=swap" rel="stylesheet">
+    <!-- カスタムCSS -->
+    <style>
+        .crazy-text {
+            font-family: 'Luckiest Guy', cursive;
+            font-size: calc(2rem + 2vw);
+            color: #ff6347; /* 落ち着いた色に変更（トマト色） */
+            text-align: center;
+            animation: subtleEffect 5s infinite;
+            text-shadow:
+                0 0 10px rgba(255, 99, 71, 0.5),
+                0 0 20px rgba(255, 99, 71, 0.4),
+                0 0 30px rgba(255, 99, 71, 0.3);
+        }
+
+        @keyframes subtleEffect {
+            0% {
+                text-shadow:
+                    0 0 10px rgba(255, 99, 71, 0.5),
+                    0 0 20px rgba(255, 99, 71, 0.4),
+                    0 0 30px rgba(255, 99, 71, 0.3);
+                transform: scale(1);
+            }
+            50% {
+                text-shadow:
+                    0 0 15px rgba(255, 99, 71, 0.5),
+                    0 0 25px rgba(255, 99, 71, 0.4),
+                    0 0 35px rgba(255, 99, 71, 0.3);
+                transform: scale(1.05);
+            }
+            100% {
+                text-shadow:
+                    0 0 10px rgba(255, 99, 71, 0.5),
+                    0 0 20px rgba(255, 99, 71, 0.4),
+                    0 0 30px rgba(255, 99, 71, 0.3);
+                transform: scale(1);
+            }
+        }
+
+        /* アニメーションをモバイルで軽減する */
+        @media (max-width: 576px) {
+            .crazy-text {
+                font-size: calc(1.5rem + 3vw);
+                animation-duration: 4s;
+            }
+        }
+
+        /* アニメーションを好まないユーザーへの配慮 */
+        @media (prefers-reduced-motion: reduce) {
+            .crazy-text {
+                animation: none;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container mt-5">
-        <div class="row justify-content-center">
+        <h1 class="crazy-text">Gamble Entry</h1>
+        <div class="row justify-content-center mt-4">
             <div class="col-md-6">
-                <h2 class="text-center mb-4">Login</h2>
+                <!-- ログインフォーム -->
                 <form method="post" class="card card-body">
                     {% csrf_token %}
                     {% for field in form %}
@@ -26,7 +86,7 @@
                         {% endfor %}
                     </div>
                     {% endfor %}
-                    <button type="submit" class="btn btn-primary btn-block">Login</button>
+                    <button type="submit" class="btn btn-primary btn-block">ログイン</button>
                 </form>
             </div>
         </div>
