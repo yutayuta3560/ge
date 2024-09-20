@@ -1,11 +1,12 @@
 from django.urls import path
 from . import views
-
+from django.views.generic import RedirectView
+from balance.views import user_login, signup
 
 urlpatterns = [
-    path('signup/', views.signup, name='signup'),
-    path('login/', views.custom_login, name='login'),
-    path('login2/', views.user_login, name='user_login'),
+    path('signup/', signup, name='signup2'),
+    path('login/', user_login, name='custom_login2'),
+    path('login2/', user_login, name='custom_login3'),
     path('all_list', views.entry_list, name='all_list'),
     path('all_graph/', views.all_users_graph, name='all_graph'),
     path('', views.my_list, name='my_list'),

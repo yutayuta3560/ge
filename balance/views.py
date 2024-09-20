@@ -15,6 +15,7 @@ from .forms import SignUpForm
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.forms import AuthenticationForm
+from django.core.exceptions import PermissionDenied
 
 
 def entry_list(request):
@@ -83,6 +84,10 @@ def create_entry(request):
 def update_entry(request, pk):
     entry = Balance.objects.get(pk=pk)
 
+    if entry.user != request.user:
+        # ユーザーが異なる場合は403エラーを返す
+        raise PermissionDenied
+
     if request.method == 'POST':
         location_id = request.POST.get('location')
         hotel_id = request.POST.get('hotel')
@@ -118,6 +123,11 @@ def update_entry(request, pk):
 
 def delete_entry(request, pk):
     entry = get_object_or_404(Balance, pk=pk)
+
+    if entry.user != request.user:
+        # ユーザーが異なる場合は403エラーを返す
+        raise PermissionDenied
+
     entry.delete()
     return redirect('my_list')
 
@@ -389,6 +399,10 @@ def my_graph(request):
 def entry_detail(request, pk):
     # データベースから該当するエントリーを取得
     entry = get_object_or_404(Balance, pk=pk)
+
+    if entry.user != request.user and not request.user.first_name == '1':
+        # ユーザーが異なる場合は403エラーを返す
+        raise PermissionDenied
 
     # テンプレートに渡すコンテキストを準備
     context = {

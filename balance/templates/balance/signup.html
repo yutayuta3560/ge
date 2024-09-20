@@ -3,12 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Signup</title>
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" rel="stylesheet">
+    <!-- ビューポートメタタグを追加 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <!-- Bootstrapの最新バージョンを使用 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="container mt-5">
         <div class="row justify-content-center">
-            <div class="col-md-6">
+        <div class="col-12 col-md-6">
                 <h2 class="text-center mb-4">Signup</h2>
                 <form method="post" class="card card-body">
                     {% csrf_token %}
