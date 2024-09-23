@@ -172,7 +172,6 @@ def all_users_graph(request):
             count=Count('id')
         )
 
-        summary_per_game = []
         game_totals = {'sum_investment': Decimal('0.00'), 'sum_payout': Decimal('0.00'),
                        'total_profit': Decimal('0.00'), 'count': 0}
 
@@ -180,6 +179,7 @@ def all_users_graph(request):
         game_name_to_data = {game.name: {'sum_investment': Decimal('0.00'), 'sum_payout': Decimal('0.00'),
                                          'total_profit': Decimal('0.00'), 'count': 0} for game in games}
 
+        # データを集計
         for balance in game_balances:
             game_name = balance['game__name']
             sum_investment = balance['sum_investment']
@@ -187,25 +187,6 @@ def all_users_graph(request):
             total_profit = balance['total_profit']
             count = balance['count']
 
-            if sum_investment == 0:
-                location_yield = 100
-            else:
-                location_yield = round(sum_payout / sum_investment * 100, 2)
-
-            summary_per_game.append({
-                'game': game_name,
-                'count': count,
-                'profit': total_profit,
-                'yield': location_yield,
-            })
-
-            # 合計を計算
-            game_totals['sum_investment'] += sum_investment
-            game_totals['sum_payout'] += sum_payout
-            game_totals['total_profit'] += total_profit
-            game_totals['count'] += count
-
-            # ゲーム別データを更新
             game_name_to_data[game_name] = {
                 'sum_investment': sum_investment,
                 'sum_payout': sum_payout,
@@ -213,15 +194,32 @@ def all_users_graph(request):
                 'count': count
             }
 
-        # 存在しないゲームを追加
+            # 合計を計算
+            game_totals['sum_investment'] += sum_investment
+            game_totals['sum_payout'] += sum_payout
+            game_totals['total_profit'] += total_profit
+            game_totals['count'] += count
+
+        # summary_per_gameを固定された順序で構築
+        summary_per_game = []
         for game in games:
-            if game.name not in [item['game'] for item in summary_per_game]:
-                summary_per_game.append({
-                    'game': game.name,
-                    'count': 0,
-                    'profit': Decimal('0.00'),
-                    'yield': 100,
-                })
+            data = game_name_to_data[game.name]
+            sum_investment = data['sum_investment']
+            sum_payout = data['sum_payout']
+            total_profit = data['total_profit']
+            count = data['count']
+
+            if sum_investment == 0:
+                location_yield = 100
+            else:
+                location_yield = round(sum_payout / sum_investment * 100, 2)
+
+            summary_per_game.append({
+                'game': game.name,
+                'count': count,
+                'profit': total_profit,
+                'yield': location_yield,
+            })
 
         # トータルの計算
         if game_totals['sum_investment'] == 0:
@@ -243,31 +241,39 @@ def all_users_graph(request):
             count=Count('date', distinct=True)
         )
 
-        location_count = []
+        # ロケーション別データを初期化
+        location_name_to_data = {location.name: {'profit': Decimal('0.00'), 'count': 0} for location in locations}
 
+        # データを集計
         for balance in location_balances:
             location_name = balance['location__name']
             total_profit = balance['total_profit']
             count = balance['count']
 
-            location_count.append({
-                'location': location_name,
-                'count': count,
+            location_name_to_data[location_name] = {
                 'profit': total_profit,
+                'count': count
+            }
+
+        # location_countを固定された順序で構築
+        location_count = []
+        total_location_profit = Decimal('0.00')
+        total_location_count = 0
+
+        for location in locations:
+            data = location_name_to_data[location.name]
+            profit = data['profit']
+            count = data['count']
+
+            location_count.append({
+                'location': location.name,
+                'count': count,
+                'profit': profit,
             })
 
-        # 存在しないロケーションを追加
-        for location in locations:
-            if location.name not in [item['location'] for item in location_count]:
-                location_count.append({
-                    'location': location.name,
-                    'count': 0,
-                    'profit': Decimal('0.00'),
-                })
-
-        # トータルの計算
-        total_location_profit = sum(item['profit'] for item in location_count if item['location'] != 'Total')
-        total_location_count = sum(item['count'] for item in location_count if item['location'] != 'Total')
+            # トータルの計算
+            total_location_profit += profit
+            total_location_count += count
 
         location_count.append({
             'location': 'Total',
@@ -277,6 +283,7 @@ def all_users_graph(request):
 
         # ホテルとゲーム別で損益
         hotel_game_profit = []
+
         for hotel in hotels:
             balances = Balance.objects.filter(user=user, hotel=hotel).values('game__name').annotate(
                 total_profit=Coalesce(Sum('profit', output_field=DecimalField()),
@@ -284,10 +291,10 @@ def all_users_graph(request):
                 count=Count('id')
             )
 
-            hotel_profit_by_hotelgame = []
-
+            # ゲーム別データを初期化
             game_data = {game.name: {'profit': Decimal('0.00'), 'count': 0} for game in games}
 
+            # データを集計
             for balance in balances:
                 game_name = balance['game__name']
                 total_profit = balance['total_profit']
@@ -298,23 +305,29 @@ def all_users_graph(request):
                     'count': count
                 }
 
+            hotel_profit_by_hotelgame = []
+            total_profit_hotel = Decimal('0.00')
+            total_count_hotel = 0
+
             for game in games:
                 data = game_data[game.name]
+                profit = data['profit']
+                count = data['count']
+
                 hotel_profit_by_hotelgame.append({
                     'game': game.name,
-                    'count': data['count'],
-                    'profit': data['profit']
+                    'count': count,
+                    'profit': profit
                 })
 
-            # トータルの計算
-            total_profit = sum(item['profit'] for item in hotel_profit_by_hotelgame)
-            total_count = sum(item['count'] for item in hotel_profit_by_hotelgame)
+                total_profit_hotel += profit
+                total_count_hotel += count
 
-            if total_count > 0:
+            if total_count_hotel > 0:
                 hotel_profit_by_hotelgame.append({
                     'game': 'Total',
-                    'count': total_count,
-                    'profit': total_profit,
+                    'count': total_count_hotel,
+                    'profit': total_profit_hotel,
                 })
 
                 hotel_game_profit.append({
@@ -352,6 +365,7 @@ def all_users_graph(request):
         })
 
     return render(request, 'balance/all_users_graph.html', {'datas': datas})
+
 
 
 def get_daily_profit(user, date):
