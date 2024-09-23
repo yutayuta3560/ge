@@ -26,8 +26,6 @@ def entry_list(request):
     paginator = Paginator(entries, 10)
     page_number = request.GET.get('page')
     entries = paginator.get_page(page_number)
-    for entry in entries:
-        entry.profit = entry.payout - entry.investment
     return render(request, 'balance/entry_list.html', {'entries': entries, 'url': 'all'})
 
 
@@ -37,8 +35,6 @@ def my_list(request):
     paginator = Paginator(entries, 10)
     page_number = request.GET.get('page')
     entries = paginator.get_page(page_number)
-    for entry in entries:
-        entry.profit = entry.payout - entry.investment
     return render(request, 'balance/entry_list.html', {'entries': entries, 'url': 'my'})
 
 

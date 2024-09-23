@@ -36,7 +36,7 @@
                                 {%for daily in data.daily_profit %}
                                 <tr>
                                     <td style="text-align:">{{ daily.date }}</td>
-                                    <td style="text-align: right;">{{ daily.profit }}</td>
+                                    <td style="text-align: right;">{{ daily.profit|floatformat }}</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
@@ -54,7 +54,7 @@
                                     <tr>
                                         <td>{{ count_data.game }}</td>
                                         <td style="text-align: right;">{{ count_data.count }} times</td>
-                                        <td style="text-align: right;">{{ count_data.profit }}/({{ count_data.yield}}%)</td>
+                                        <td style="text-align: right;">{{ count_data.profit|floatformat }}/({{ count_data.yield}}%)</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -72,7 +72,7 @@
                                     <tr>
                                         <td>{{ count_data.location }}</td>
                                         <td style="text-align: right;">{{ count_data.count }} days</td>
-                                        <td style="text-align: right;">{{ count_data.profit }}</td>
+                                        <td style="text-align: right;">{{ count_data.profit|floatformat }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -80,18 +80,18 @@
                         <table class="table table-striped">
                             <thead class="thead-dark">
                                 <tr>
-                                    <th scope="col">Profit (Count)</th>
+                                    <th scope="col">PL(Cnt)</th>
                                     {% for profit_data in data.game_count %}
-                                    <th style="text-align: right;">{{ profit_data.game }}</th>
+                                    <th style="text-align: right;">{{ profit_data.game|slice:":6" }}</th>
                                     {% endfor %}
                                 </tr>
                             </thead>
                             <tbody>
                                     {% for hotel_data in data.hotel_game_profit %}
                                     <tr>
-                                        <td>{{ hotel_data.hotel }}</td>
+                                        <td>{{ hotel_data.hotel|slice:":8" }}</td>
                                         {% for game in hotel_data.games %}
-                                        <td style="text-align: right;">{{ game.profit }} ({{game.count}})</td>
+                                        <td style="text-align: right;">{{ game.profit|floatformat }}({{game.count}})</td>
                                         {% endfor %}
                                     </tr>
                                     {% endfor %}
