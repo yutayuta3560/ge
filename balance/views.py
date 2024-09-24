@@ -327,7 +327,7 @@ def all_users_graph(request):
                 })
 
                 hotel_game_profit.append({
-                    'hotel': hotel.name,
+                    'hotel': hotel.short_name,
                     'games': hotel_profit_by_hotelgame
                 })
 

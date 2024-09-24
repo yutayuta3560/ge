@@ -11,6 +11,7 @@ class Location(models.Model):
 
 class Hotel(models.Model):
     name = models.CharField(max_length=100)
+    short_name = models.CharField(max_length=100, null=True)
     location = models.ForeignKey(Location, on_delete=models.CASCADE, null=True)
 
     def __str__(self):
