@@ -32,7 +32,7 @@
                     <th>User</th>
                     {% endif %}
                     <th>Hotel</th>
-                    <th>Game</th>
+                    <th>G</th>
                     <th>P/L</th>
                     <th>Date</th>
                     <th>Actions</th>
@@ -43,12 +43,12 @@
                 {% for entry in entries %}
                 <tr>
                     {% if url == 'all' %}
-                    <td>{{ entry.user }}</td>
+                    <td>{{ entry.user.username|slice:"3" }}</td>
                     {% endif %}
-                    <td>{{ entry.hotel.name|slice:":6" }}</td>
-                    <td>{{ entry.game.name|slice:":6" }}</td>
+                    <td>{{ entry.hotel.short_name }}</td>
+                    <td>{{ entry.game.name|slice:":1" }}</td>
                     <td class="text-end">{{ entry.profit|floatformat }}</td>
-                    <td>{{ entry.date|date:'m/d/y' }}</td>
+                    <td>{{ entry.date|date:'m/d' }}</td>
                         <td>
                             <a href="{% url 'entry_detail' entry.pk %}" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#entryDetailModal{{ entry.id }}">Details</a>
                         </td>
@@ -93,7 +93,7 @@
                 <ul class="pagination justify-content-center">
                     {% if entries.has_previous %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ entries.previous_page_number }}" aria-label="Previous">&laquo; 前へ</a>
+                            <a class="page-link" href="?page={{ entries.previous_page_number }}" aria-label="Previous">&laquo; Prev</a>
                         </li>
                     {% endif %}
 
@@ -103,7 +103,7 @@
 
                     {% if entries.has_next %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ entries.next_page_number }}" aria-label="Next">次へ &raquo;</a>
+                            <a class="page-link" href="?page={{ entries.next_page_number }}" aria-label="Next">Next &raquo;</a>
                         </li>
                     {% endif %}
                 </ul>
