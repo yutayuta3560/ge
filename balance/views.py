@@ -145,7 +145,7 @@ def custom_login(request):
         return HttpResponse("Invalid login.")
 
 
-def all_users_graph(request):
+def report(request):
     # 全てのユーザーを取得
     users = User.objects.all()
     games = Game.objects.all().order_by('name')
@@ -360,8 +360,88 @@ def all_users_graph(request):
             'daily_profit': daily_profit,
         })
 
-    return render(request, 'balance/all_users_graph.html', {'datas': datas})
+    return render(request, 'balance/report.html', {'datas': datas})
 
+
+def group_report(request):
+    today = datetime.today().date()
+    week_ago = today - timedelta(days=3)
+
+    date_list = [week_ago + timedelta(days=i) for i in range(4)]
+
+    # 全ユーザーの直近一週間のデータを取得
+    balances = Balance.objects.filter(
+        date__range=(week_ago, today)
+    ).values('user__username', 'date').annotate(
+        total_profit=Coalesce(
+            Sum('profit', output_field=DecimalField()),
+            Value(Decimal('0.00'), output_field=DecimalField()),
+            output_field=DecimalField()
+        ),
+        total_investment=Coalesce(
+            Sum('investment', output_field=DecimalField()),
+            Value(Decimal('0.00'), output_field=DecimalField()),
+            output_field=DecimalField()
+        ),
+        total_payout=Coalesce(
+            Sum('payout', output_field=DecimalField()),
+            Value(Decimal('0.00'), output_field=DecimalField()),
+            output_field=DecimalField()
+        )
+    )
+
+    # データの整理
+    data_dict = {}
+    for balance in balances:
+        username = balance['user__username']
+        date = balance['date']
+        profit = balance['total_profit']
+        investment = balance['total_investment']
+        payout = balance['total_payout']
+
+        if username not in data_dict:
+            data_dict[username] = {
+                'daily_profits': {d: Decimal('0.00') for d in date_list},
+                'daily_investments': {d: Decimal('0.00') for d in date_list},
+                'daily_payouts': {d: Decimal('0.00') for d in date_list},
+                'total_profit': Decimal('0.00'),
+                'total_investment': Decimal('0.00'),
+                'total_payout': Decimal('0.00'),
+            }
+        data_dict[username]['daily_profits'][date] = profit
+        data_dict[username]['daily_investments'][date] = investment
+        data_dict[username]['daily_payouts'][date] = payout
+        data_dict[username]['total_profit'] += profit
+        data_dict[username]['total_investment'] += investment
+        data_dict[username]['total_payout'] += payout
+
+    if request.user.username not in data_dict or not request.user.first_name:
+        return redirect('report')
+
+    user_reports = []
+    for username, data in data_dict.items():
+        daily_profits = [data['daily_profits'][date] for date in date_list]
+        daily_investments = [data['daily_investments'][date] for date in date_list]
+        daily_payouts = [data['daily_payouts'][date] for date in date_list]
+        user_reports.append({
+            'username': username,
+            'daily_profits': daily_profits,
+            'daily_investments': daily_investments,
+            'daily_payouts': daily_payouts,
+            'total_profit': data['total_profit'],
+            'total_investment': data['total_investment'],
+            'total_payout': data['total_payout'],
+        })
+
+    # 日付リストを文字列に変換（テンプレートでの表示用）
+    date_list_str = [date.strftime('%Y-%m-%d') for date in date_list]
+
+    # テンプレートにデータを渡す
+    return render(request, 'balance/group_report.html', {
+        'user_reports': user_reports,
+        'date_list': date_list_str,
+        'week_range': f"{week_ago} ~ {today}",
+    })
 
 
 def get_daily_profit(user, date):

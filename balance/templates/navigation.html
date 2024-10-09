@@ -10,17 +10,26 @@
                     <a class="nav-link" href="{% url 'my_list' %}">My List</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="{% url 'all_graph' %}">Report</a>
+                    <a class="nav-link" href="{% url 'report' %}">Report</a>
                 </li>
+                {% if request.user.first_name == '1' %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'all_list' %}">Group List</a>
                 </li>
+                {% endif %}
+                {% if request.user.first_name %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'group_report' %}">Group Report</a>
+                </li>
+                {% endif %}
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'my_graph' %}">Graph</a>
                 </li>
-<!--                <li class="nav-item">-->
-<!--                    <a class="nav-link" href="#">Other</a>-->
-<!--                </li>-->
+                {% if request.user.is_authenticated %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{% url 'logout' %}">Logout</a>
+                </li>
+                {% endif %}
             </ul>
             {% if request.user.is_authenticated %}
             <span class="navbar-text">

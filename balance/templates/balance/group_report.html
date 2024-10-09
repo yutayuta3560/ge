@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Metaタグとタイトル -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Profit Report</title>
+    <!-- Bootstrap CSSの読み込み -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- ナビゲーションバー（必要に応じて） -->
+    {% include 'navigation.html' %}
+
+    <div class="container mt-4">
+        <h1 class="mb-4">Group Report<br>({{ week_range }})</h1>
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>User</th>
+                    <th class="text-end">Total Investment</th>
+                    <th class="text-end">Total Payout</th>
+                    <th class="text-end">Total Profit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in user_reports %}
+                <tr>
+                    <td>{{ report.username }}</td>
+                    <td class="text-end">{{ report.total_investment|floatformat:2 }}</td>
+                    <td class="text-end">{{ report.total_payout|floatformat:2 }}</td>
+                    <td class="text-end {% if report.total_profit < 0 %}text-danger{% else %}text-success{% endif %}">
+                        {{ report.total_profit|floatformat:2 }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bootstrap JSと依存関係の読み込み（必要に応じて） -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

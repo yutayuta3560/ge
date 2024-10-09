@@ -1,2 +1,7 @@
 
 db.sqlite3
+/balance/migrations
+*.pyc
+.idea/vcs.xml
+*.pyc
+*.pyc
